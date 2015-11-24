@@ -31,6 +31,8 @@ convertpath_fresh<-function(ratio){
   simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
   conc<-convertpath_fresh(ratio)
+  #We decided concentration will be lognormally distributed
+  #Schets 2010 reports gamma distribution of ingestion and lorm distribution of duration(time)
   c<-mcstoc(rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
   i<-mcstoc(rgamma,type="V",rate=0.45,shape=60)
   t<-mcstoc(rlnorm,type="VU",meanlog=3.6,sdlog=0.85)
@@ -52,9 +54,9 @@ convertpath_fresh<-function(ratio){
 
   #risk infection per event
   print(rowpath["org"])
-  swiminf<-mc(c,i,t,d,riski)
+  swiminf<<-mc(c,i,t,d,riski)
   print(swiminf)
- 
+
   #risk disease per event 
   print(rowpath["org"])
   swimdis<-mc(c,i,d,riskd)
