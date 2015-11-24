@@ -32,8 +32,7 @@ simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
   conc<-convertpath_fresh(ratio)
   c<-mcstoc(rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
-  i<-mcstoc(rgamma,type="V",rate=0.45,shape=60)
-  #i<-3.23-average ingestion per event from 3 papers 
+  #i<-3.23-average ingestion per wading event from 3 papers 
   d<-c*3.23
   
   
@@ -53,12 +52,12 @@ simulator<-function(rowpath){
   
   #risk infection per event
   print(rowpath["org"])
-  swiminf<-mc(c,i,d,riski)
+  swiminf<-mc(c,d,riski)
   print(swiminf)
   
   #risk disease per event 
   print(rowpath["org"])
-  swimdis<-mc(c,i,d,riskd)
+  swimdis<-mc(c,d,riskd)
   print(swimdis)
   
   
