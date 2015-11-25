@@ -58,13 +58,13 @@ simulator<-function(rowpath){
   riskd <- riski *as.numeric(rowpath["pdi"])
   
   #risk infection per event
-  sailinf<-mc(c,d,riski)
+  sailinf<-mc(c,i,d,riski)
   print(rowpath["org"])
   print(sailinf)
   summary(sailinf)
   
   #risk disease per event 
-  saildis<-mc(c,d,riskd)
+  saildis<-mc(c,i,d,riskd)
   print(rowpath["org"])
   print(saildis)
   summary(saildis)
