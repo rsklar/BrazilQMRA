@@ -52,13 +52,13 @@ simulator<-function(rowpath){
   
   #risk infection per event
   print(rowpath["org"])
-  swiminf<-mc(c,d,riski)
-  print(swiminf)
+  wadeinf<-mc(c,d,riski)
+  print(wadeinf)
   
   #risk disease per event 
   print(rowpath["org"])
-  swimdis<-mc(c,d,riskd)
-  print(swimdis)
+  wadedis<-mc(c,d,riskd)
+  print(wadedis)
   
   
 }
