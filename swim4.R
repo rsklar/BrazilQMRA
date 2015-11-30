@@ -1,6 +1,8 @@
 library(fitdistrplus)
 library(mc2d)
 concdatfresh<-read.csv("./concdatfresh.csv",header=TRUE,sep=",")
+ndvar(10001)
+
 #swim 3 has a coefficient, swim 4 file doesn't use a for dose response calc. 
 
 #Scenario: Swimming in freshwater:
@@ -16,7 +18,7 @@ pathogen<-data.frame(
   org     =c("ecoli",   "campylobacter", "salmonella", "rotavirus", "cryptosporidium", "ascaris"),
   alpha   =c(NA,        0.145,           0.3126,       0.2531,      NA,                NA),
   n50     =c(NA,        896,             23600,        6.17,        NA,                NA),
-  pdi     =c(NA,        0.3,             0.3,          0.5,         0.7,               0.39),
+  pdi     =c(1,        0.3,             0.3,          0.5,         0.7,               0.39),
   k       =c(0.0000511, NA,              NA,           NA,          0.00419,           0.0199),
   ratio   =c(1,         10^5,            10^5,         10^5,        10^6,              10^6),
   equation=c("expon",   "bpois",         "bpois",      "bpois",     "expon",           "expon")
@@ -27,21 +29,19 @@ convertpath_fresh<-function(ratio){
   (concdatfresh$mpn.ml*0.843)/ratio
 }
 
-#For each pathogen go through the simulation
-  simulator<-function(rowpath){
+#For each pathogen go through the Monte Carlo Simulations
+
+simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
   conc<-convertpath_fresh(ratio)
   #We decided concentration will be lognormally distributed
   #Schets 2010 reports gamma distribution of ingestion and lorm distribution of duration(time)
-  c<-mcstoc(rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
-  i<-mcstoc(rgamma,type="V",rate=0.45,shape=60)
-  t<-mcstoc(rlnorm,type="VU",meanlog=3.6,sdlog=0.85)
+  c<-mcstoc(func=rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
+  i<-mcstoc(func=rgamma,type="V",rate=0.45,shape=60)
+  t<-mcstoc(func=rlnorm,type="VU",meanlog=3.6,sdlog=0.85)
   d<-c*i*t
   
-  #Monte Carlo Simulations
-  ndvar(10001)
-
-  riski<-if(rowpath["equation"]=="expon"){
+  riski<<-if(rowpath["equation"]=="expon"){
     k<-as.numeric(rowpath["k"])
     expon(k,d)
   } else if(rowpath["equation"]=="bpois"){
@@ -53,15 +53,19 @@ convertpath_fresh<-function(ratio){
   riskd <- riski *as.numeric(rowpath["pdi"])
 
   #risk infection per event
-  print(rowpath["org"])
-  swiminf<<-mc(c,i,t,d,riski)
-  print(swiminf)
+  if(rowpath["org"] != "ecoli"){
+    print(rowpath["org"])
+    swiminf<<-mc(c,i,t,d,riski)
+    #print(swiminf) 
+    print(summary(swiminf))
+  }
 
   #risk disease per event 
   print(rowpath["org"])
   swimdis<-mc(c,i,d,riskd)
-  print(swimdis)
-
+  #print(swimdis)
+  print(summary(swimdis))
+  
   
 }
 
