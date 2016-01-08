@@ -1,3 +1,4 @@
+setwd("/Users/rachel/documents/r/brazilqmra")
 library(fitdistrplus)
 library(mc2d)
 concdatsalt<-read.csv("./concdatsalt.csv",header=TRUE,sep=",")
@@ -18,28 +19,24 @@ pathogen<-data.frame(
   org=c("ecoli","campylobacter","salmonella","rotavirus","cryptosporidium", "ascaris"),
   alpha=c(NA, 0.145, 0.3126, 0.2531, NA, NA),
   n50=c(NA,896, 23600, 6.17, NA, NA),
-  pdi=c(NA,0.3, 0.3, 0.5, 0.7, 0.39),
-  k=c(0.001715176,NA, NA, NA, 0.00419, 0.0199),
+  pdi=c(1,0.3, 0.3, 0.5, 0.7, 0.39),
+  k=c(0.001715176,NA, NA, NA, 0.00419, 1),
   ratio=c(1, 10^5, 10^5, 10^5, 10^6, 10^6),
   equation=c("expon", "bpois", "bpois", "bpois", "expon", "expon")
 )
 
-#Convert FC to pathogen concentration
-#multiply by .01 to change mpn/100 to mpn/ml
-#0.175 ratio of FC:Ecoli in Freshwater from EPA 
-
-concdatsalt2<-concdatsalt[1,]
-concdatsalt3<-c(concdatsalt2$Janeiro,concdatsalt2$Fevereiro,concdatsalt2$Marco,concdatsalt2$Abril,concdatsalt2$Maio,concdatsalt2$Junho,concdatsalt2$Julho,concdatsalt2$Agosto.1,concdatsalt2$Agosto.2,concdatsalt2$Setembro,concdatsalt2$Outubro)
-convertpath_salt<-function(ratio) {
-  (concdatsalt3*0.01*0.63)/ratio  
-}
 
 #Simulate infection risk and illness risk for each pathogen
 simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
-  conc<-convertpath_salt(ratio)
-  c<-mcstoc(rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
-  i<-mcstoc(runif,type="VU",min=0,max=11.8)
+  conc<<-concdatsalt$mpn.100.ml
+  
+
+  r<-mcstoc(rlnorm,meanlog=log(ratio),sdlog=1.4)
+  dd<-mcstoc(rlnorm,meanlog=mean(log(conc)),sdlog=sd(log(conc)))
+  c<-(dd*0.01*0.63)/r
+  
+  i<-mcstoc(runif,min=0,max=11.8)
   #t<-0.52 hr- mean of average target sailing times reported by olympic trial committee
   d<-c*i*0.52
   
@@ -60,14 +57,14 @@ simulator<-function(rowpath){
   
   #risk infection per event
   if(rowpath["org"] != "ecoli"){
-  sailinf<-mc(c,d,riski)
+  sailinf<-mc(r,c,dd,d,riski)
   print(rowpath["org"])
   print(sailinf)
   summary(sailinf)
 }
   
   #risk disease per event 
-  saildis<-mc(c,d,riskd)
+  saildis<-mc(r,c,dd,d,riskd)
   print(rowpath["org"])
   print(saildis)
   summary(saildis)

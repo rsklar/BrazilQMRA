@@ -22,7 +22,7 @@ pathogen<-data.frame(
   a       =c(0.000105,  1,               1,            1,           1,                 1),
   n50     =c(NA,        896,             23600,        6.17,        NA,                NA),
   pdi     =c(1,        0.3,             0.3,          0.5,         0.7,               0.39),
-  k       =c(0.0000511, NA,              NA,           NA,          0.00419,           0.0199),
+  k       =c(0.0000511, NA,              NA,           NA,          0.00419,           1),
   ratio   =c(1,         10^5,            10^5,         10^5,        10^6,              10^6),
   equation=c("expon",   "bpois",         "bpois",      "bpois",     "expon",           "expon")
 )
