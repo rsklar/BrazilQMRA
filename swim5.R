@@ -5,11 +5,9 @@ concdatfresh<-read.csv("./concdatfresh.csv",header=TRUE,sep=",")
 
 ndvar(10001)
 
-#swim 4a uses the a neha suggests in her dose response for ecoli. 
-
 #Scenario: Swimming in freshwater:
 expon<-function(a,k,d){
-  return(a+(1-a)*(1-(exp(1)^(-k*d))))
+  return((a+(1-a))*(1-(exp(1)^(-k*d))))
 }
   
 bpois<-function(n50,alpha,d){
@@ -19,7 +17,7 @@ bpois<-function(n50,alpha,d){
 pathogen<-data.frame(
   org     =c("ecoli",   "campylobacter", "salmonella", "rotavirus", "cryptosporidium", "ascaris"),
   alpha   =c(NA,        0.145,           0.3126,       0.2531,      NA,                NA),
-  a       =c(0.000105,  1,               1,            1,           1,                 1),
+  a       =c(0.000105,  0,               0,            0,           0,                 0),
   n50     =c(NA,        896,             23600,        6.17,        NA,                NA),
   pdi     =c(1,        0.3,             0.3,          0.5,         0.7,               0.39),
   k       =c(0.0000511, NA,              NA,           NA,          0.00419,           1),
@@ -40,9 +38,9 @@ simulator<-function(rowpath){
   
   #r=ratio,dd=distribution environmental data,c=concentration, i=ingestion volume, t=time
   r<<-mcstoc(func=rlnorm,meanlog=log(ratio),sdlog=1.4)
- 
   dd<-mcstoc(func=rlnorm,meanlog= mean(log(concdatfresh$mpn.ml)),sdlog=sd((log(concdatfresh$mpn.ml))))
   c<-(dd*0.843)/r
+  
   i<-mcstoc(func=rgamma,rate=0.45,shape=60)
   t<-mcstoc(func=rlnorm,meanlog=3.6,sdlog=0.85)
   
@@ -74,7 +72,7 @@ simulator<-function(rowpath){
   
   #risk disease per event 
   print(rowpath["org"])
-  swimdis<-mc(c,i,d,r,dd,riskd)
+  swimdis<-mc(c,i,t,d,r,dd,riskd)
   print(swimdis)
   
 }

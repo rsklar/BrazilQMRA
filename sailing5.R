@@ -5,8 +5,8 @@ concdatsalt<-read.csv("./concdatsalt.csv",header=TRUE,sep=",")
 
 #Scenario:Sailing in saltwater, using dose response for salt water fitted by Alex and Rachel from US data
 #using a distribution for i, uniform distribution using UCL as max, 0 as min
-expon<-function(k,d){
-  return((1-(exp(1)^(-k*d))))
+expon<-function(a,k,d){
+  return((a+(1-a))*(1-(exp(1)^(-k*d))))
 }
 
 bpois<-function(n50,alpha,d){
@@ -16,15 +16,15 @@ bpois<-function(n50,alpha,d){
 #according to original exponential dose response equation fit at drexel workshop, k=0.001715176
 
 pathogen<-data.frame(
-  org=c("ecoli","campylobacter","salmonella","rotavirus","cryptosporidium", "ascaris"),
-  alpha=c(NA, 0.145, 0.3126, 0.2531, NA, NA),
-  n50=c(NA,896, 23600, 6.17, NA, NA),
-  pdi=c(1,0.3, 0.3, 0.5, 0.7, 0.39),
-  k=c(0.001715176,NA, NA, NA, 0.00419, 1),
-  ratio=c(1, 10^5, 10^5, 10^5, 10^6, 10^6),
-  equation=c("expon", "bpois", "bpois", "bpois", "expon", "expon")
+  org     =c("ecoli",   "campylobacter", "salmonella", "rotavirus", "cryptosporidium", "ascaris"),
+  alpha   =c(NA,        0.145,           0.3126,       0.2531,      NA,                NA),
+  a       =c(0.000105,  0,               0,            0,           0,                 0),
+  n50     =c(NA,        896,             23600,        6.17,        NA,                NA),
+  pdi     =c(1,        0.3,             0.3,          0.5,         0.7,               0.39),
+  k       =c(0.000143199657478504, NA,              NA,           NA,          0.00419,           1),
+  ratio   =c(1,         10^5,            10^5,         10^5,        10^6,              10^6),
+  equation=c("expon",   "bpois",         "bpois",      "bpois",     "expon",           "expon")
 )
-
 
 #Simulate infection risk and illness risk for each pathogen
 simulator<-function(rowpath){
@@ -44,8 +44,9 @@ simulator<-function(rowpath){
   ndvar(10001)
   
   riski<-if(rowpath["equation"]=="expon"){
+    a<-as.numeric(rowpath["a"])
     k<-as.numeric(rowpath["k"])
-    expon(k,d)
+    expon(a,k,d)
   } else if(rowpath["equation"]=="bpois"){
     n50<-as.numeric(rowpath["n50"])
     alpha<-as.numeric(rowpath["alpha"])
@@ -57,14 +58,14 @@ simulator<-function(rowpath){
   
   #risk infection per event
   if(rowpath["org"] != "ecoli"){
-  sailinf<-mc(r,c,dd,d,riski)
+  sailinf<-mc(c,dd,d,r,riski)
   print(rowpath["org"])
   print(sailinf)
   summary(sailinf)
 }
   
   #risk disease per event 
-  saildis<-mc(r,c,dd,d,riskd)
+  saildis<-mc(c,dd,d,r,riskd)
   print(rowpath["org"])
   print(saildis)
   summary(saildis)

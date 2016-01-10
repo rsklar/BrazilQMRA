@@ -3,9 +3,11 @@ library(fitdistrplus)
 library(mc2d)
 concdatfresh<-read.csv("./concdatfresh.csv",header=TRUE,sep=",")
 
-#Scenario: Swimming in freshwater:
-expon<-function(k,d){
-  return((1-(exp(1)^(-k*d))))
+ndvar(10001)
+
+#Scenario: Wading in Freshwater
+expon<-function(a,k,d){
+  return((a+(1-a))*(1-(exp(1)^(-k*d))))
 }
 
 bpois<-function(n50,alpha,d){
@@ -15,6 +17,7 @@ bpois<-function(n50,alpha,d){
 pathogen<-data.frame(
   org     =c("ecoli",   "campylobacter", "salmonella", "rotavirus", "cryptosporidium", "ascaris"),
   alpha   =c(NA,        0.145,           0.3126,       0.2531,      NA,                NA),
+  a       =c(0.000105,  0,               0,            0,           0,                 0),
   n50     =c(NA,        896,             23600,        6.17,        NA,                NA),
   pdi     =c(1,        0.3,             0.3,          0.5,         0.7,               0.39),
   k       =c(0.0000511, NA,              NA,           NA,          0.00419,           1),
@@ -22,8 +25,8 @@ pathogen<-data.frame(
   equation=c("expon",   "bpois",         "bpois",      "bpois",     "expon",           "expon")
 )
 
+#For each pathogen go through the Monte Carlo Simulations
 
-#For each pathogen go through the simulation
 simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
   
@@ -32,23 +35,23 @@ simulator<-function(rowpath){
   #check to see if you should divide or multiply by the ratio. 
   #should i make an mc stoch of "d<-mcstoc(func=rpois,type="V",lambda=dose)"
   #information on r distribution from howard 2007
-  #empirical distribution for data. check on this
-  
+
+  #r=ratio,dd=distribution environmental data,c=concentration, i=ingestion volume, t=time. no separate i or t for wading-using a point value for mean ingestion per event.
   r<<-mcstoc(func=rlnorm,meanlog=log(ratio),sdlog=1.4)
-  
   dd<-mcstoc(func=rlnorm,meanlog= mean(log(concdatfresh$mpn.ml)),sdlog=sd((log(concdatfresh$mpn.ml))))
   c<-(dd*0.843)/r
-  
+
   #i<-3.23-average ingestion per wading event from 3 papers 
   d<-c*3.23
   
   
   #Monte Carlo Simulations
-  ndvar(10001)
+
   
   riski<-if(rowpath["equation"]=="expon"){
+    a<-as.numeric(rowpath["a"])
     k<-as.numeric(rowpath["k"])
-    expon(k,d)
+    expon(a,k,d)
   } else if(rowpath["equation"]=="bpois"){
     n50<-as.numeric(rowpath["n50"])
     alpha<-as.numeric(rowpath["alpha"])
