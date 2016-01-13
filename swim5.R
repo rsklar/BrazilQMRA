@@ -38,15 +38,16 @@ simulator<-function(rowpath){
   
   #r=ratio,dd=distribution environmental data,c=concentration, i=ingestion volume, t=time
   r<<-mcstoc(func=rlnorm,meanlog=log(ratio),sdlog=1.4)
+  #dd=pathogens per mL
   dd<-mcstoc(func=rlnorm,meanlog= mean(log(concdatfresh$mpn.ml)),sdlog=sd((log(concdatfresh$mpn.ml))))
   c<-(dd*0.843)/r
   
   i<-mcstoc(func=rgamma,rate=0.45,shape=60)
-  t<-mcstoc(func=rlnorm,meanlog=3.6,sdlog=0.85)
-  
+
   #dose is a combo of distributions
-  #c*i/t?????
-  d<-(c*i)/t
+
+  d<-(c*i)
+  
   plot(c)
   plot(i)
   plot(t)
@@ -66,13 +67,13 @@ simulator<-function(rowpath){
   #Risk Infection Per Event
   if(rowpath["org"] != "ecoli"){
     print(rowpath["org"])
-    swiminf<<-mc(c,i,t,d,r,dd,riski)
+    swiminf<<-mc(c,i,d,r,dd,riski)
     print(swiminf) 
   }
   
   #risk disease per event 
   print(rowpath["org"])
-  swimdis<-mc(c,i,t,d,r,dd,riskd)
+  swimdis<-mc(c,i,d,r,dd,riskd)
   print(swimdis)
   
 }
