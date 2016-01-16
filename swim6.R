@@ -26,6 +26,8 @@ pathogen<-data.frame(
 )
 
 #For each pathogen go through the Monte Carlo Simulations
+  #create an empty vector to store riskd
+  riskvector<-vector(mode="numeric", length=0)
 
 simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
@@ -48,10 +50,6 @@ simulator<-function(rowpath){
 
   d<-(c*i)
   
-  plot(c)
-  plot(i)
-  plot(t)
-  
   riski<-if(rowpath["equation"]=="expon"){
     a<-as.numeric(rowpath["a"])
     k<-as.numeric(rowpath["k"])
@@ -66,20 +64,28 @@ simulator<-function(rowpath){
 
   #Risk Infection Per Event
   if(rowpath["org"] != "ecoli"){
-    print(rowpath["org"])
+    #print(rowpath["org"])
     swiminf<<-mc(c,i,d,r,dd,riski)
-    print(swiminf) 
+    #print(swiminf) 
+    #print(summary(swiminf))
   }
   
   #risk disease per event 
-  print(rowpath["org"])
-  swimdis<-mc(c,i,d,r,dd,riskd)
-  print(swimdis)
-  
+  #print(rowpath["org"])
+  return(mc(c,i,d,r,dd,riskd))
 }
 
-(apply(pathogen,1,simulator))
+sdis<-apply(pathogen,1,simulator)
 
+#function to generate mean(riskd) for each pathogen
 
+riskd<-function(swimmc){
+  mean(swimmc$riskd)
+}
 
+meanrisk<-lapply(sdis,riskd)
+names(meanrisk)<-pathogen$org
+
+riskdiarrhea<-1-((1-meanrisk$ecoli)*(1-meanrisk$campylobacter)*(1-meanrisk$salmonella)*(1-meanrisk$rotavirus)*(1-meanrisk$cryptosporidium)*(1-meanrisk$ascaris))
+print(riskdiarrhea)
 
