@@ -1,3 +1,4 @@
+setwd("/Users/rachel/documents/r/brazilqmra")
 library(fitdistrplus)
 library(mc2d)
 concdatfresh<-read.csv("./concdatfresh.csv",header=TRUE,sep=",")
@@ -26,30 +27,33 @@ pathogen<-data.frame(
   equation=c("expon",   "bpois",         "bpois",      "bpois",     "expon",           "expon")
 )
 
-#Convert FC to pathogen concentration
-convertpath_fresh<-function(ratio){
-  (concdatfresh$mpn.ml*0.843)/ratio
-}
-
 #For each pathogen go through the Monte Carlo Simulations
 
 simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
   
   #We decided concentration will be lognormally distributed
+    #i also tried the empirical distribution
   #Schets 2010 reports gamma distribution of ingestion and lorm distribution of duration(time)
+  #information on r distribution from howard 2007  
+  #?dd<-mcstoc(rempiricalD,values=concdatfresh$mpn.ml)
   
-  #r=ratio,dd=distribution environmental data,c=concentration
-  #ask patrick if i should run this as an mc stoch or not. 
-  r<-mcstoc(func=rlnorm,type="V",meanlog=ratio)
-  dd<-mcstoc(func=rlnorm,type="V",meanlog=mean(log(concdatfresh$mpn.ml)),sdlog=sd(log(concdatfresh$mpn.ml)))
- #check to see if you should divide or multiply by the ratio. 
-  c<-dd*0.843/r
-  i<-mcstoc(func=rgamma,type="V",rate=0.45,shape=60)
-  t<-mcstoc(func=rlnorm,type="V",meanlog=3.6,sdlog=0.85)
-  d<-c*i*t
+  #r=ratio,dd=distribution environmental data,c=concentration, i=ingestion volume, t=time
+  r<<-mcstoc(func=rlnorm,meanlog=log(ratio),sdlog=1.4)
+ 
+  dd<-mcstoc(func=rlnorm,meanlog= mean(log(concdatfresh$mpn.ml)),sdlog=sd((log(concdatfresh$mpn.ml))))
+  c<-(dd*0.843)/r
+  i<-mcstoc(func=rgamma,rate=0.45,shape=60)
+  t<-mcstoc(func=rlnorm,meanlog=3.6,sdlog=0.85)
   
-  riski<<-if(rowpath["equation"]=="expon"){
+  #dose is a combo of distributions
+  #c*i/t?????
+  d<-(c*i)/t
+  plot(c)
+  plot(i)
+  plot(t)
+  
+  riski<-if(rowpath["equation"]=="expon"){
     a<-as.numeric(rowpath["a"])
     k<-as.numeric(rowpath["k"])
     expon(a,k,d)
@@ -58,24 +62,22 @@ simulator<-function(rowpath){
     alpha<-as.numeric(rowpath["alpha"])
     bpois(n50,alpha,d)
   }
-  
-  riskd <- riski *as.numeric(rowpath["pdi"])
+  plot(riski)
+  riskd <- riski*as.numeric(rowpath["pdi"])
 
-  #risk infection per event
+  #Risk Infection Per Event
   if(rowpath["org"] != "ecoli"){
     print(rowpath["org"])
-    swiminf<<-mc(c,i,t,d,riski)
+    swiminf<<-mc(c,i,t,d,r,dd,riski)
     print(swiminf) 
-    #print(summary(swiminf))
   }
   
   #risk disease per event 
   print(rowpath["org"])
-  swimdis<-mc(c,i,d,riskd)
+  swimdis<-mc(c,i,d,r,dd,riskd)
   print(swimdis)
-  #print(summary(swimdis))
-  #plot(swimdis, na.rm=TRUE)
   
+
   
 }
 

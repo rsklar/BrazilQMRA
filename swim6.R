@@ -32,12 +32,6 @@ pathogen<-data.frame(
 simulator<-function(rowpath){
   ratio<-as.numeric(rowpath["ratio"])
   
-  #We decided concentration will be lognormally distributed
-    #i also tried the empirical distribution
-  #Schets 2010 reports gamma distribution of ingestion and lorm distribution of duration(time)
-  #information on r distribution from howard 2007  
-  #?dd<-mcstoc(rempiricalD,values=concdatfresh$mpn.ml)
-  
   #r=ratio,dd=distribution environmental data,c=concentration, i=ingestion volume, t=time
   r<<-mcstoc(func=rlnorm,meanlog=log(ratio),sdlog=1.4)
   #dd=pathogens per mL
@@ -64,28 +58,32 @@ simulator<-function(rowpath){
 
   #Risk Infection Per Event
   if(rowpath["org"] != "ecoli"){
-    #print(rowpath["org"])
     swiminf<<-mc(c,i,d,r,dd,riski)
-    #print(swiminf) 
-    #print(summary(swiminf))
   }
   
-  #risk disease per event 
-  #print(rowpath["org"])
+#swim disease is contained in this return value
+  
   return(mc(c,i,d,r,dd,riskd))
 }
+swimdis<-apply(pathogen,1,simulator)
+names(swimdis)<-pathogen$org
 
-sdis<-apply(pathogen,1,simulator)
 
 #function to generate mean(riskd) for each pathogen
 
-riskd<-function(swimmc){
+pathriskd<-function(swimmc){
   mean(swimmc$riskd)
 }
 
-meanrisk<-lapply(sdis,riskd)
+meanrisk<-lapply(swimdis,pathriskd)
 names(meanrisk)<-pathogen$org
 
-riskdiarrhea<-1-((1-meanrisk$ecoli)*(1-meanrisk$campylobacter)*(1-meanrisk$salmonella)*(1-meanrisk$rotavirus)*(1-meanrisk$cryptosporidium)*(1-meanrisk$ascaris))
-print(riskdiarrhea)
+#riskdiarrhea<-1-((1-meanrisk$ecoli)*(1-meanrisk$campylobacter)*(1-meanrisk$salmonella)*(1-meanrisk$rotavirus)*(1-meanrisk$cryptosporidium)*(1-meanrisk$ascaris))
+#names(riskdiarrhea)<-"Swimming Diarrhea Risk"
+#print(riskdiarrhea)
+
+riskdiarrhea<-1-((1-sample(swimdis[[1]]$riskd,size=1))*(1-sample(swimdis[[2]]$riskd,size=1))*(1-sample(swimdis[[3]]$riskd,size=1))*(1-sample(swimdis[[4]]$riskd,size=1))*(1-sample(swimdis[[5]]$riskd,size=1))*(1-sample(swimdis[[6]]$riskd,size=1))
+                 
+)
+
 

@@ -58,6 +58,7 @@ simulator<-function(rowpath){
     swiminf<<-mc(c,i,t,d,riski)
     #print(swiminf) 
     print(summary(swiminf))
+
   }
 
   #risk disease per event 
@@ -65,6 +66,7 @@ simulator<-function(rowpath){
   swimdis<-mc(c,i,d,riskd)
   #print(swimdis)
   print(summary(swimdis))
+  plot(swimdis, na.rm=TRUE)
   
   
 }

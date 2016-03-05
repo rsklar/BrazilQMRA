@@ -18,10 +18,10 @@ bpois<-function(n50,alpha,d){
 pathogen<-data.frame(
   org     =c("ecoli",   "campylobacter", "salmonella", "rotavirus", "cryptosporidium", "ascaris"),
   alpha   =c(NA,        0.145,           0.3126,       0.2531,      NA,                NA),
-  a       =c(0.000105,  0,               0,            0,           0,                 0),
+  a       =c(0,  0,               0,            0,           0,                 0),
   n50     =c(NA,        896,             23600,        6.17,        NA,                NA),
   pdi     =c(1,        0.3,             0.3,          0.5,         0.7,               0.39),
-  k       =c(0.000143199657478504, NA,              NA,           NA,          0.00419,           1),
+  k       =c(0.0001432, NA,              NA,           NA,          0.00419,           1),
   ratio   =c(1,         10^5,            10^5,         10^5,        10^6,              10^6),
   equation=c("expon",   "bpois",         "bpois",      "bpois",     "expon",           "expon")
 )
@@ -60,15 +60,16 @@ simulator<-function(rowpath){
   if(rowpath["org"] != "ecoli"){
   sailinf<-mc(c,dd,d,r,riski)
   print(rowpath["org"])
-  print(sailinf)
-  summary(sailinf)
+  #print(sailinf)
+  print(summary(sailinf))
+  
 }
   
   #risk disease per event 
   saildis<-mc(c,dd,d,r,riskd)
   print(rowpath["org"])
-  print(saildis)
-  summary(saildis)
+  #print(saildis)
+  print(summary(saildis))
   plot(saildis)
 }
 

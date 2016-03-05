@@ -1,0 +1,233 @@
+---
+title: "Public Health 251D: Quantitative Microbial Risk Assessment, Guanabara Bay"
+author: "Rachel Sklar"
+date: "December 7, 2015"
+output:
+  html_document:
+    toc: true
+    theme: united
+  doc_document:
+    toc: true
+    highlight: zenburn
+---
+
+# 1. Introduction 
+
+The high level of contamination in Guanabara Bay has been a topic of concern, especially as the 2016 summer Olympics approaches. Brazilian officials have assured that the water will be safe for the Olympic athletes and the medical director of the International Olympic Committee said all was on track for providing safe competing venues. However, these safety measures are based bacteria testing only. In this study we present a Quantitative Microbial Risk Assessment (QMRA) to estimate infection and illness risks of six criteria pathogens. We examine the risks of atheletes contracting highly credible gaastrointestinal disease (HCGD) via the ingestion of water contaminated by these pathogens.
+
+Pathogens that were chosen for this QMRA include the same reference organisms of the 2006 WHO guidelines: Rotavirus, Campylobacter, and Cryptosporidium. The analysis also includes salmonella, and Ascaris because 1) These pathogens have been shown to persist in slums that have poor sanitation infrastructure, 2) they have been used as a proxy for bacterial and helminthic contamination in other studies, and 3) E.coli:Pathogen ratios have been measured in other studies. Risk predictions based on indicator E.coli concentrations were also made by using an existing dose response model for the freshwater context, and building a new dose response model for the saltwater context. 
+
+# 2. Methods or Concepts 
+
+1.	Fecal Coliform Concentration: Water samples were taken by the State Institute of the Environment (INEA) from 5 different monitoring stations in the area of Guanabara Bay that will hold Olympic events. A total of 55 samples were taken from January to October and used for this analysis. A lognormal distribution was chosen as the best fit for the concentration data due to the continuous nature of the concentration data and the presence of only positive values. The risk of contracting diarrheal disease was estimated based on the estimate of the concentration of each pathogen. An E. coli: pathogen ratio was used to calculate the concentration of pathogens: the E. coli: Rotaviruses, E. coli: Campylobacter and E. coli: Salmonella ratio was assumed to be 1: 105 and the E. coli: Cryptosporidium and E. coli: Ascaris ratio to be 1: 106.
+
+The concentration data was read into R by the following code:
+```{r}
+#concdatsalt<-read.csv("./concdatsalt.csv",header=TRUE,sep=",")
+```
+
+Information regarding the conversion to pathogens and the dose response parameters was included in the following data frame. Parameters in this dataframe, named "pathogen" will be used as inputs to functions that will be described.  
+
+```{r}
+pathogen<-data.frame(
+  org=c("ecoli","campylobacter","salmonella","rotavirus","cryptosporidium", "ascaris"),
+  alpha=c(NA, 0.145, 0.3126, 0.2531, NA, NA),
+  n50=c(NA,896, 23600, 6.17, NA, NA),
+  pdi=c(NA,0.3, 0.3, 0.5, 0.7, 0.39),
+  k=c(0.001715176,NA, NA, NA, 0.00419, 0.0199),
+  ratio=c(1, 10^5, 10^5, 10^5, 10^6, 10^6),
+  equation=c("expon", "bpois", "bpois", "bpois", "expon", "expon")
+)
+```
+
+
+
+2.	Pathogen Concentration: The USEPA ratios of 35 E. coli per 200 faecal coliforms (0.175), was applied to estimate the E.Coli concentration from the samples of known faecal coliform concentrations. Then, the E. coli: pathogen ratio was used to calculate the concentration of pathogens. The E. coli: Rotaviruses, E. coli: Campylobacter and E. coli: Salmonella ratio was assumed to be 1: 105 and the E. coli: Cryptosporidium and E. coli: Ascaris ratio to be 1: 106.
+
+The original concentration data is passed through the following function that returns the concentration in pathogens per mL.
+
+```{r}
+#Convert FC to pathogen concentration
+#multiply by .01 to change mpn/100 to mpn/ml
+#0.175 ratio of FC:Ecoli in Freshwater from EPA
+#   convertpath_salt<-function(ratio) {
+#   (concdatsalt1*0.01*0.175)/ratio  
+#   }
+```
+
+3.	Ingestion Volume: The volume of water ingested during sailing was derived from studies that estimated the volumes of water ingested during “limited contact water recreation activities.” These activities included canoeing, fishing, kayaking, motor boating, rowing, wading, splashing, and walking (Dorevitch 2011). Rowing/Canoing presented the highest ingested volumes during recreational activities. A uniform distribution was created using a min=0 and a max equal to the upper confidence limit of the mean ingestion during rowing/canoing reported in Dorevitch. The UCL Dorevitch/Max of our ingestion parameter=11.8 mL/hr.
+
+```{r}
+# i<-mcstoc(runif,type="VU",min=0,max=11.8)
+```
+
+Time/Duration: The Organizing Authority in Rio 2016 in conjunction with the International Sailing Federation (ISAF) released a document detailing logistics of a test event program for the Rio 2016 Olympic and Paralympic Games. This document included target times in minutes for the opening series and medal races. The mean of these target times was used as a point estimate for the duration of time of the events. 
+```{r}
+# t<-0.52 hr- mean of average target sailing times reported by olympic trial committee
+```
+
+4.	Dose: The dose associated with a sailing event was calculated as the product of the concentration of each pathogen in organisms/mL, the ingestion in ml/hour, and the point estimate for the time.C,I, and T represent distributions and a Monte Carlo simulator will be used to sample from those distributions to output a distribution for the dose. 
+```{r}
+# d<-c*i*t
+```
+
+5.	Risk Infection and Disease: 10,001 monte carlo simulations for each pathogen were used to estimate the risk of infection and the risk of disease given the parameter distributions for c,i,t  and d mentioned above. The risk of infection was estimated for pathogens that follow exponential and beta poisson dose response by the function called "simulator" below. The apply function is used to apply "simulator"" to each row, representing each pathogen, in the data frame mentioned above.
+
+```{r}
+##Simulate infection risk and illness risk for each pathogen
+# simulator<-function(rowpath){
+#   ratio<-as.numeric(rowpath["ratio"])
+#   conc<-convertpath_salt(ratio)
+#   c<-mcstoc(rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
+#   i<-mcstoc(runif,type="VU",min=0,max=11.8)
+#   t<-0.52 hr- mean of average target sailing times reported by olympic trial committee
+#   d<-c*i*0.52
+  
+  ##MC
+  #ndvar(10001)
+  
+#  riski<-if(rowpath["equation"]=="expon"){
+#    k<-as.numeric(rowpath["k"])
+#    expon(k,d)
+#   } else if(rowpath["equation"]=="bpois"){
+#     n50<-as.numeric(rowpath["n50"])
+#     alpha<-as.numeric(rowpath["alpha"])
+#     bpois(n50,alpha,d)
+#   }
+  
+#  riskd <- riski *as.numeric(rowpath["pdi"])
+  
+#  #risk infection per event
+#   sailinf<-mc(c,d,riski)
+#   print(rowpath["org"])
+#   print(sailinf)
+#   summary(sailinf)
+  
+#  #risk disease per event 
+#   saildis<-mc(c,d,riskd)
+#   print(rowpath["org"])
+#   print(saildis)
+#   summary(saildis)
+#   plot(saildis)
+# }
+
+# apply(pathogen,1,simulator)
+```
+
+Each pathogen follows either a previously defined beta poisson or exponential dose response function. The dose response designations (either beta poisson or exponential) and the parameters of the dose response are designated in the "pathogen" dataframe. When rowpath runs, depending on the pathogen, it will run one of the two dose response functions below: 
+
+```{r}
+#   expon<-function(k,d){
+#   return((1-(exp(1)^(-k*d))))
+#   }
+
+#   bpois<-function(n50,alpha,d){
+#   return(1-(1+d*(2^(1/alpha)-1)/n50)^-alpha)
+#   } 
+
+```
+
+
+# 3. Results 
+
+The results risk of disease for each pathogen is very low. While the AP conducted a study that incdicated that concentrations in the water were equivalent to raw sewage, the results of my simulation indicate that the concentrations are low and adhere to the recreational water standards in Brazil and the United States. The mean of the infections and disease risk distributions for each pathogen are shown below. The risk of infection is not given for E.coli because the dose response for E.coli relates concentration to disease.  
+
+```{r}
+#               risk inf        risk d
+#ecoli		                        1.86e-05
+#campylobacter	  1.61e-07	      4.83e-08
+#salmonella	    9.59e-10	      2.88e-10
+#rotavirus	      0.000005	      0.0000025
+#cryptosporidium	3.55E-09	      2.49E-09
+#ascaris	        1.81E-08	      7.07E-09
+```
+
+# 4. Discussion 
+According to a recent AP report, the waters in Rio de Janeiro, host of the 2016 Summer Olympics, are "teeming with viruses and bacteria from human feces", equivalent to "levels that are found in raw sewage." It is unclear, however, whether those levels were based on pathogen data, or fecal indicator bacteria. 
+
+My model sought to estimate the risks of ingesting specific pathogens and contracting illness using the indicator bacteria levels that the Brazilian government published in 2015. According to my model, the pathogen levels are unlikely to be equivalent to "levels found in raw sewage." The Brazilian government sustains that the water is safe. However, the Brazilian standard for fecal coliform limits is 1000 MPN/100mL, whereas in the US it is 250 MPN/100mL. Future work on this project will entail investigating whether a more specific fecal coliform:pathogen ratio is available for tropical waters, or Brazilian waters. This may likely explain the descrepancy between my model and the AP's findings. 
+
+
+
+# Appendix with Full Script and Output
+Full script and output: 
+
+```{r}
+library(fitdistrplus)
+library(mc2d)
+concdatsalt<-read.csv("./concdatsalt.csv",header=TRUE,sep=",")
+
+#Scenario:Sailing in saltwater, using dose response for salt water fitted by Alex and Rachel from US data
+#using a distribution for i, uniform distribution using UCL as max, 0 as min
+expon<-function(k,d){
+  return((1-(exp(1)^(-k*d))))
+}
+
+bpois<-function(n50,alpha,d){
+  return(1-(1+d*(2^(1/alpha)-1)/n50)^-alpha)
+}
+
+#according to original exponential dose response equation fit at drexel workshop, k=0.001715176
+
+pathogen<-data.frame(
+  org=c("ecoli","campylobacter","salmonella","rotavirus","cryptosporidium", "ascaris"),
+  alpha=c(NA, 0.145, 0.3126, 0.2531, NA, NA),
+  n50=c(NA,896, 23600, 6.17, NA, NA),
+  pdi=c(NA,0.3, 0.3, 0.5, 0.7, 0.39),
+  k=c(0.000021502,NA, NA, NA, 0.00419, 0.0199),
+  ratio=c(1, 10^5, 10^5, 10^5, 10^6, 10^6),
+  equation=c("expon", "bpois", "bpois", "bpois", "expon", "expon")
+)
+
+#Convert FC to pathogen concentration
+#multiply by .01 to change mpn/100 to mpn/ml
+#0.175 ratio of FC:Ecoli in Freshwater from EPA 
+
+concdatsalt1<-c(concdatsalt$Janeiro,concdatsalt$Fevereiro,concdatsalt$Marco,concdatsalt$Abril,concdatsalt$Maio,concdatsalt$Junho,concdatsalt$Julho, concdatsalt$Agosto,concdatsalt$Setembro, concdatsalt$Outubro)
+convertpath_salt<-function(ratio) {
+  (concdatsalt1*0.01*0.175)/ratio  
+}
+
+#Simulate infection risk and illness risk for each pathogen
+simulator<-function(rowpath){
+  ratio<-as.numeric(rowpath["ratio"])
+  conc<-convertpath_salt(ratio)
+  c<-mcstoc(rlnorm,type="V",meanlog=mean(log(conc)),sdlog=sd(log(conc)))
+  i<-mcstoc(runif,type="VU",min=0,max=11.8)
+  #t<-0.52 hr- mean of average target sailing times reported by olympic trial committee
+  d<-c*i*0.52
+  
+  #MC
+  ndvar(10001)
+  
+  riski<-if(rowpath["equation"]=="expon"){
+    k<-as.numeric(rowpath["k"])
+    expon(k,d)
+  } else if(rowpath["equation"]=="bpois"){
+    n50<-as.numeric(rowpath["n50"])
+    alpha<-as.numeric(rowpath["alpha"])
+    bpois(n50,alpha,d)
+    
+  }
+  
+  riskd <- riski *as.numeric(rowpath["pdi"])
+  
+  #risk infection per event
+   if(rowpath["org"] != "ecoli"){
+  sailinf<-mc(c,d,riski)
+  print(rowpath["org"])
+  print(sailinf)
+  summary(sailinf)
+}
+  
+  #risk disease per event 
+  saildis<-mc(c,i,d,riskd)
+  print(rowpath["org"])
+  print(saildis)
+  summary(saildis)
+}
+
+apply(pathogen,1,simulator)
+
+```
+
