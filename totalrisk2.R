@@ -81,7 +81,7 @@
           )
         }
         
-        
+        #total risk includes pathogens, not indicator org.
         totalrisksail<-replicate(n=10000,expr=risktsail(),simplify = "vector")
 
 #wading
@@ -168,6 +168,7 @@
         }
         
         
+        #total risk includes pathogens, not indicator org.
         totalriskwade<-replicate(n=10000,expr=risktwade(),simplify = "vector")
         
 
@@ -253,6 +254,7 @@
         }
         
         
+        #total risk includes pathogens, not indicator org.
         totalriskswim<-replicate(n=10000,expr=risktswim(),simplify = "vector")
         
 #Mean of distributions of each pathogen/exposure scenario (For total pathogen specific risks)
