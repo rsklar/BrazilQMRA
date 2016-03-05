@@ -69,14 +69,14 @@
 
           riskd <- riski *as.numeric(rowpath["pdi"])
 
-          #risk infection per event
-          if(rowpath["org"] != "ecoli"){
-            sailinf<-mc(c,dd,d,r,riski)
-          }
-
           if (rowpath["org"] == "entero") {
             return(mc(c,i,d,dd,riskd))
           } else {
+            #risk infection per event
+            if(rowpath["org"] != "ecoli"){
+              sailinf<-mc(c,dd,d,r,riski)
+            }
+
             return(mc(c,i,d,r,dd,riskd))
           }
         }
